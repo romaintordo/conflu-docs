@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "site": "conflu-docs",
+    "public": "out",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [{"key": "Cache-Control", "value": "max-age=31536000"}]
+      }
+    ]
+  }
+}

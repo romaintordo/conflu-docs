@@ -1,0 +1,36 @@
+---
+title: Security
+description: How Conflu handles your data and credentials.
+---
+
+# Security & Privacy
+
+## Data handling
+
+Conflu **does not store your emails, files, or calendar events**. When Claude queries your tools, Conflu fetches data live from the source API and returns it directly to Claude. Nothing is cached or persisted beyond your session.
+
+## OAuth credentials
+
+Your OAuth tokens (Microsoft, Google) are stored encrypted in **Google Cloud Secret Manager**. Each account's token is stored in a separate secret version. When you disconnect an account, the secret version is deleted immediately.
+
+- Tokens are AES-256 encrypted at rest
+- Tokens are rotated automatically before expiry
+- Revocation from the provider side is respected immediately
+
+## Infrastructure
+
+| Component | Technology |
+|-----------|-----------|
+| MCP server | Cloud Run (private ingress) |
+| Auth & database | Firebase Auth + Firestore |
+| Secrets | GCP Secret Manager |
+| CDN / hosting | Firebase Hosting |
+| Region | Europe West (Belgium) |
+
+## Data residency
+
+All data is processed in the EU (GCP europe-west1). No data is transferred outside the EU.
+
+## Reporting a vulnerability
+
+Email [security@conflu.xyz](mailto:security@conflu.xyz). We aim to respond within 48 hours.

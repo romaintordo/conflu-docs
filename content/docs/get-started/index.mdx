@@ -1,0 +1,54 @@
+---
+title: Get Started
+description: Connect your tools. Query everything. In 5 minutes.
+---
+
+# Get Started with Conflu
+
+Conflu is an MCP (Model Context Protocol) server that connects your SaaS tools — Microsoft 365, Google Workspace, and more — and makes them queryable by Claude.
+
+## Prerequisites
+
+- A Conflu account ([conflu.xyz](https://conflu.xyz))
+- Claude Desktop or any MCP-compatible client
+
+## Quick Setup
+
+### 1. Sign up
+
+Go to [conflu.xyz](https://conflu.xyz) and create your account.
+
+### 2. Connect your tools
+
+In the dashboard, click **Connect** next to the tools you want to use (M365, Google Workspace, etc.).
+
+### 3. Get your MCP endpoint
+
+In **Settings**, copy your personal MCP endpoint URL:
+```
+https://conflu-mcp-server-xxxxxxxx-ew.a.run.app
+```
+
+### 4. Configure Claude Desktop
+
+Add Conflu to your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "conflu": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "YOUR_ENDPOINT_URL"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You can now ask Claude to search your emails, read calendar events, and more.
+
+---
+
+## What's next?
+
+- [Connectors](/docs/connectors) — Which tools are supported
+- [MCP Reference](/docs/mcp-reference) — Full list of MCP tools
+- [Plans](/docs/plans) — Free, Pro, and Ultra tiers

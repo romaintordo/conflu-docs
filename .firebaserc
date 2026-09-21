@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "conflu-xyz"
+  },
+  "targets": {
+    "conflu-xyz": {
+      "hosting": {
+        "conflu-docs": ["conflu-docs"]
+      }
+    }
+  }
+}
