@@ -23,7 +23,7 @@ Conflu logs **metadata** about each tool call (tool name, account id, latency, s
 
 ## API keys
 
-Your MCP API key (`cfx_…`) is a bearer credential. Treat it like a password. Rotate it from **MCP setup** if it leaks.
+Your MCP API key (`cfx_…`) is a bearer credential. Treat it like a password. It is encrypted in Google Secret Manager so the dashboard can show it to you again; rotate it from **MCP setup** if it leaks, which revokes the previous key immediately.
 
 ## Reporting issues
 
