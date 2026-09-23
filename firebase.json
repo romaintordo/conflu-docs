@@ -2,11 +2,27 @@
   "hosting": {
     "site": "conflu-docs",
     "public": "out",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "headers": [
       {
         "source": "**/*.@(js|css)",
-        "headers": [{"key": "Cache-Control", "value": "max-age=31536000"}]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=31536000"
+          }
+        ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/docs",
+        "type": 301
       }
     ]
   }
