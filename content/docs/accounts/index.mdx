@@ -1,0 +1,57 @@
+---
+title: Accounts
+description: Connect, reconnect, and choose which mailbox each tool call uses.
+---
+
+# Accounts
+
+Each connected mailbox is a document under your user in Conflu. The MCP tools use the **account id** (a UUID), not the email address, in `account_id`.
+
+## Connecting
+
+1. Dashboard → **Connections** → **Accounts**.
+2. Choose **Microsoft 365** or **Google**.
+3. Sign in with the provider. Conflu writes account metadata to Firestore and stores the refresh token in Secret Manager.
+
+## Reconnecting
+
+Sign in again with the **same email**. Conflu updates the existing account row — it does not create a second row for the same mailbox. Your `account_id` stays the same, so saved MCP configs keep working.
+
+## Primary account
+
+Each provider (Microsoft, Google) can have one account marked **primary**. If you omit `account_id` on a tool call, Conflu uses the primary **connected** account for that provider.
+
+Set primary in the dashboard when you have multiple mailboxes for the same provider.
+
+## Token expiry and disconnection
+
+If Microsoft or Google rejects a refresh token (`invalid_grant`), Conflu marks the account **disconnected** and skips it on future `account_id: "all"` calls. The dashboard shows **Needs reconnection**.
+
+Reconnect with OAuth to issue a new refresh token. On success, Conflu clears `lastAuthError` on the account.
+
+Google accounts in **OAuth Testing** mode may lose refresh tokens after seven days until Google approves production access — reconnect when that happens.
+
+## Using `account_id` in tools
+
+| Value | Behaviour |
+| --- | --- |
+| Omitted | Primary connected account for the tool's provider |
+| UUID | That specific account |
+| `"all"` | Every **connected** account of that provider (list tools only; see [Tools reference](/docs/tools-reference)) |
+
+Example for one mailbox:
+
+```json
+{
+  "name": "google_list_emails",
+  "arguments": {
+    "account_id": "8f2c1b4a-…",
+    "query": "is:unread",
+    "limit": 10
+  }
+}
+```
+
+## Disconnecting
+
+Use **Disconnect** on the account row. Conflu marks the account disconnected and deletes the refresh token secret. MCP tools will not use that account until you connect again.

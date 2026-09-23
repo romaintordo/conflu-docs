@@ -1,0 +1,217 @@
+---
+title: Tools reference
+description: All microsoft_* and google_* MCP tools, parameters, and multi-account responses.
+---
+
+# Tools reference
+
+Conflu implements MCP **tools/call** over `POST https://mcp.conflu.xyz/v1`. Tool names are prefixed by provider: `microsoft_*` and `google_*`.
+
+## Common parameters
+
+| Parameter | Used by | Description |
+| --- | --- | --- |
+| `account_id` | Most tools | Firestore account UUID, `"all"` for every connected account (list tools), or omit for your **primary** account |
+| `limit` | List tools | Per-account or total cap (1–50 depending on tool) |
+
+Write tools (`*_create_task`, `*_complete_task`) require a single account — **not** `"all"`.
+
+## Multi-account list responses
+
+When `account_id` is `"all"` (or multiple accounts are queried), list tools merge results and add:
+
+```json
+{
+  "emails": [ … ],
+  "accounts_queried": 3,
+  "accounts_skipped": 1,
+  "errors": [
+    {
+      "account_id": "6324d63c-…",
+      "email": "user@client.com",
+      "code": "ACCOUNT_DISCONNECTED",
+      "message": "Microsoft refresh token is invalid or revoked; reconnect this account in the Conflu dashboard."
+    }
+  ]
+}
+```
+
+- `accounts_queried` — always present on successful list responses that fan out to accounts.
+- `accounts_skipped` — present when at least one account was skipped (for example disconnected).
+- `errors` — per-account failures. Other accounts' data is still returned.
+
+The call **fails** (Conflu error JSON) only when **every** targeted account fails — same as a single-account failure.
+
+Disconnected accounts are not queried; they are listed in `errors` with `ACCOUNT_DISCONNECTED`.
+
+---
+
+## Microsoft 365
+
+### `microsoft_list_emails`
+
+List recent messages from a mail folder (metadata; plan limits may truncate bodies on Free).
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `folder` | string | `inbox` | Folder id or well-known name |
+| `limit` | integer | 25 | Max messages per account (1–50) |
+
+```json
+{
+  "name": "microsoft_list_emails",
+  "arguments": { "account_id": "all", "folder": "inbox", "limit": 10 }
+}
+```
+
+### `microsoft_list_calendar_events`
+
+List calendar events (default window: now → +7 days).
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `start_datetime` | string | now | ISO 8601 start |
+| `end_datetime` | string | +7 days | ISO 8601 end |
+| `limit` | integer | 20 | Max events per account (1–50) |
+
+### `microsoft_list_contacts`
+
+List contacts; optional name/email filter.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `search` | string | — | Optional substring filter |
+| `limit` | integer | 25 | Max contacts per account (1–50) |
+
+### `microsoft_list_tasks`
+
+List Microsoft To Do tasks.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `list_id` | string | all lists | Specific To Do list id |
+| `status` | string | `notStarted` | `notStarted` \| `inProgress` \| `completed` \| `all` |
+| `limit` | integer | 25 | Max tasks total (1–50) |
+
+Call without `list_id` first to discover list ids and names.
+
+### `microsoft_create_task`
+
+Create a task in a specific list. **Cannot** use `account_id: "all"`.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `list_id` | yes | To Do list id |
+| `title` | yes | Task title |
+| `account_id` | no | Defaults to primary |
+| `due_date_time` | no | ISO 8601 |
+| `importance` | no | `low` \| `normal` \| `high` |
+| `body` | no | Notes |
+
+### `microsoft_complete_task`
+
+Mark a task completed.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `list_id` | yes | To Do list id |
+| `task_id` | yes | Task id |
+| `account_id` | no | Defaults to primary |
+
+---
+
+## Google Workspace
+
+### `google_list_emails`
+
+List Gmail messages (summary metadata).
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary Google | Account UUID or `"all"` |
+| `query` | string | — | Gmail search query |
+| `limit` | integer | 25 | Max messages per account (1–50) |
+
+```json
+{
+  "name": "google_list_emails",
+  "arguments": {
+    "account_id": "all",
+    "query": "is:unread newer_than:7d",
+    "limit": 15
+  }
+}
+```
+
+### `google_list_calendar_events`
+
+Same date/limit behaviour as Microsoft calendar tool.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `start_datetime` | string | now | ISO 8601 |
+| `end_datetime` | string | +7 days | ISO 8601 |
+| `limit` | integer | 20 | Max events per account (1–50) |
+
+### `google_list_contacts`
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `search` | string | — | Optional filter |
+| `limit` | integer | 25 | Max contacts per account (1–50) |
+
+### `google_list_tasks`
+
+Google Tasks lists and items.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary | Account UUID or `"all"` |
+| `list_id` | string | all lists | Task list id |
+| `status` | string | `notStarted` | Same values as Microsoft |
+| `limit` | integer | 25 | Max tasks (1–50) |
+
+### `google_create_task`
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `list_id` | yes | Google Tasks list id |
+| `title` | yes | Task title |
+| `account_id` | no | Defaults to primary |
+| `due_date_time` | no | ISO 8601 |
+| `importance` | no | `low` \| `normal` \| `high` |
+| `body` | no | Notes |
+
+### `google_complete_task`
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `list_id` | yes | Task list id |
+| `task_id` | yes | Task id |
+| `account_id` | no | Defaults to primary |
+
+---
+
+## Errors
+
+Failed tools return JSON-RPC **200** with an MCP result where `isError: true` and the text body is a Conflu error object:
+
+```json
+{
+  "error": {
+    "code": "QUOTA_EXCEEDED_REQUESTS",
+    "message": "Monthly MCP request quota exceeded.",
+    "request_id": "…"
+  }
+}
+```
+
+Common codes: `UNAUTHORIZED`, `QUOTA_EXCEEDED_REQUESTS`, `QUOTA_EXCEEDED_EGRESS`, `ACCOUNT_DISCONNECTED`, `ACCOUNT_NOT_FOUND`, `PROVIDER_ERROR`, `RATE_LIMITED_BY_PROVIDER`, `INSUFFICIENT_SCOPES`, `INVALID_PARAMETERS`, `TOOL_NOT_FOUND`.
+
+See [Troubleshooting](/docs/troubleshooting) for what to do next.

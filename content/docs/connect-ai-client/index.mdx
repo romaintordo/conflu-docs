@@ -1,0 +1,91 @@
+---
+title: Connect your AI client
+description: Add https://mcp.conflu.xyz/v1 to Claude, Cursor, and other MCP hosts.
+---
+
+# Connect your AI client
+
+Conflu exposes a **streamable HTTP** MCP server at `https://mcp.conflu.xyz/v1`. Authenticate every request with:
+
+```
+Authorization: Bearer cfx_YOUR_KEY
+```
+
+Get the key from the dashboard under **Connections** → **MCP setup**.
+
+## Claude Desktop
+
+Claude Desktop only launches **local** MCP servers. Use the `mcp-remote` bridge to reach Conflu:
+
+```json
+{
+  "mcpServers": {
+    "conflu": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.conflu.xyz/v1",
+        "--header",
+        "Authorization:${CONFLU_AUTH}"
+      ],
+      "env": {
+        "CONFLU_AUTH": "Bearer cfx_YOUR_KEY"
+      }
+    }
+  }
+}
+```
+
+Merge this into `claude_desktop_config.json`, quit Claude Desktop completely, and reopen it.
+
+## Claude Code
+
+```bash
+claude mcp add --transport http conflu https://mcp.conflu.xyz/v1 \
+  --header "Authorization: Bearer cfx_YOUR_KEY"
+```
+
+## Cursor
+
+**Manual config** (`~/.cursor/mcp.json` or project MCP settings):
+
+```json
+{
+  "mcpServers": {
+    "conflu": {
+      "url": "https://mcp.conflu.xyz/v1",
+      "headers": {
+        "Authorization": "Bearer cfx_YOUR_KEY"
+      }
+    }
+  }
+}
+```
+
+The dashboard can also open a **Cursor deeplink** when you have a fresh key in the browser session.
+
+## ChatGPT
+
+ChatGPT developer-mode connectors expect **OAuth**, not a static API key header. Conflu does not support that flow yet, so you cannot connect Conflu inside ChatGPT today. Use Claude, Cursor, or any HTTP MCP client instead.
+
+## Any other HTTP MCP client
+
+Use the same URL and header. Example shape for OpenAI-style MCP over HTTP:
+
+```json
+{
+  "type": "mcp",
+  "server_label": "conflu",
+  "server_url": "https://mcp.conflu.xyz/v1",
+  "headers": {
+    "Authorization": "Bearer cfx_YOUR_KEY"
+  }
+}
+```
+
+Windsurf and custom SDKs work the same way: one POST per JSON-RPC message, JSON response (no SSE).
+
+## Verify the connection
+
+Ask your client to run `tools/list`. You should see `microsoft_list_emails`, `google_list_calendar_events`, and the other tools listed in the [Tools reference](/docs/tools-reference).
