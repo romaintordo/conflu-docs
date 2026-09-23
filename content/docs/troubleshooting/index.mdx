@@ -1,0 +1,53 @@
+---
+title: Troubleshooting
+description: Reconnection, quota errors, lost API keys, and reading the request log.
+---
+
+# Troubleshooting
+
+## Account stuck on "Needs reconnection"
+
+The refresh token is invalid or revoked. In the dashboard, open **Connections** → **Accounts** and reconnect that mailbox.
+
+In **advanced** dashboard mode, you may see `lastAuthError` (for example `Token refresh failed (401 invalid_grant)`). That is Conflu's summary — not the raw provider response.
+
+After reconnect, run the same tool again with the same `account_id`.
+
+## Lost MCP API key
+
+Conflu only shows the full key once at mint time. If you lost it:
+
+1. Go to **Connections** → **MCP setup**.
+2. Click **Rotate key** and update every AI client config with the new `cfx_…` value.
+
+You cannot recover the old key.
+
+## `QUOTA_EXCEEDED_REQUESTS` or `QUOTA_EXCEEDED_EGRESS`
+
+You hit your monthly cap (or used all top-ups). Check **Usage** in the dashboard. Limits reset at **00:00 UTC on the 1st** of each month, or upgrade / buy a top-up on Pro.
+
+Remember: `account_id: "all"` still counts as **one** request.
+
+## `ACCOUNT_DISCONNECTED`
+
+The tool tried to use an account that is disconnected. Reconnect in the dashboard or pass a different `account_id`.
+
+On list tools with `account_id: "all"`, disconnected accounts appear in the `errors` array instead of being queried silently.
+
+## `UNAUTHORIZED`
+
+Your MCP `Authorization` header is missing or wrong. Use `Bearer cfx_YOUR_KEY` on every POST to `https://mcp.conflu.xyz/v1`.
+
+## `INSUFFICIENT_SCOPES` or `PROVIDER_ERROR`
+
+The provider rejected the call (often 403). Reconnect and accept the requested scopes, or check that the mailbox still has access in Microsoft 365 / Google Admin.
+
+## Reading the request log
+
+Enable **advanced** mode on the dashboard. Open **Usage** → request log table.
+
+Each row shows time, tool, account (email looked up from your account list), latency, status, and Conflu `errorCode` when the call failed. Use it to see whether failures are quota, auth, or provider-side.
+
+## Platform outages
+
+If [conflu.xyz/status](https://conflu.xyz/status) shows a connector degraded or down, the issue is on Conflu's side — reconnecting your mailbox will not help. The dashboard overview also warns when platform checks fail.

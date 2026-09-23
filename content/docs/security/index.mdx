@@ -1,36 +1,30 @@
 ---
-title: Security
-description: How Conflu handles your data and credentials.
+title: Security and data
+description: What Conflu stores, where tokens live, and where to read the full policies.
 ---
 
-# Security & Privacy
+# Security and data
 
-## Data handling
+Conflu is designed so provider content passes through without being kept on disk. For the full legal and policy text, use the marketing site — this page is a short technical summary.
 
-Conflu **does not store your emails, files, or calendar events**. When Claude queries your tools, Conflu fetches data live from the source API and returns it directly to Claude. Nothing is cached or persisted beyond your session.
+## Official policies
 
-## OAuth credentials
+- [Your data](https://conflu.xyz/data) — what we store and what we do not
+- [Security](https://conflu.xyz/security) — tokens, infrastructure, EU processing
+- [Privacy policy](https://conflu.xyz/privacy)
 
-Your OAuth tokens (Microsoft, Google) are stored encrypted in **Google Cloud Secret Manager**. Each account's token is stored in a separate secret version. When you disconnect an account, the secret version is deleted immediately.
+## Tokens
 
-- Tokens are AES-256 encrypted at rest
-- Tokens are rotated automatically before expiry
-- Revocation from the provider side is respected immediately
+OAuth refresh tokens live in **Google Cloud Secret Manager**, one secret per account. They are not stored in Firestore. Disconnecting an account deletes the secret.
 
-## Infrastructure
+## MCP request metadata
 
-| Component | Technology |
-|-----------|-----------|
-| MCP server | Cloud Run (private ingress) |
-| Auth & database | Firebase Auth + Firestore |
-| Secrets | GCP Secret Manager |
-| CDN / hosting | Firebase Hosting |
-| Region | Europe West (Belgium) |
+Conflu logs **metadata** about each tool call (tool name, account id, latency, status, egress size) for the dashboard request log. It does **not** store tool arguments, tool results, email bodies, or attachment content in that log.
 
-## Data residency
+## API keys
 
-All data is processed in the EU (GCP europe-west1). No data is transferred outside the EU.
+Your MCP API key (`cfx_…`) is a bearer credential. Treat it like a password. Rotate it from **MCP setup** if it leaks.
 
-## Reporting a vulnerability
+## Reporting issues
 
-Email [security@conflu.xyz](mailto:security@conflu.xyz). We aim to respond within 48 hours.
+Security concerns: see the contact section on [conflu.xyz/security](https://conflu.xyz/security).

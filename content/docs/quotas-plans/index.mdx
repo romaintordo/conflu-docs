@@ -1,0 +1,47 @@
+---
+title: Quotas and plans
+description: Monthly MCP requests, egress, and how counting works.
+---
+
+# Quotas and plans
+
+Conflu enforces **monthly** limits on MCP **requests** and **egress** (response bytes). Limits depend on your plan. Account limits are separate.
+
+## What counts as one request
+
+**One MCP `tools/call` = one request**, no matter how many mailboxes you query. Calling `microsoft_list_emails` with `account_id: "all"` and three connected accounts still consumes **one** request and increments egress by the size of the combined JSON response.
+
+## Monthly period
+
+Usage resets on the **first day of each calendar month at 00:00 UTC**. The dashboard shows when the current period ends. Top-up balances (Pro) are consumed when you exceed your plan's included requests or egress before the reset.
+
+## Plan limits (defaults)
+
+These are the default caps from Conflu's plan configuration. Your user document may override `requestsLimit` / `egressLimitBytes` after billing changes.
+
+| Plan | Connected accounts | MCP requests / month | Egress / month |
+| --- | --- | --- | --- |
+| Free | 2 | 500 | 50 MB |
+| Pro | 10 | 50,000 | 50 GB |
+| Ultra | 25 | 250,000 | 100 GB |
+
+Free and Pro include **package connectors** (Microsoft 365 + Google). Pro and Ultra unlock **premium connectors** when they ship. **Web Crawling** is Ultra-only.
+
+Pro users can buy top-ups (+10,000 requests or +50 GB egress) from billing settings.
+
+## When you hit a limit
+
+The MCP server returns a Conflu error before calling the provider:
+
+- `QUOTA_EXCEEDED_REQUESTS` — monthly request cap (including top-ups) reached
+- `QUOTA_EXCEEDED_EGRESS` — monthly egress cap reached
+
+Upgrade your plan or wait for the UTC month rollover.
+
+## Free-tier data shaping
+
+On Free, email bodies and large attachments may be truncated or omitted compared to Pro/Ultra. Tool responses still count toward egress.
+
+## See your usage
+
+Dashboard → **Usage** shows requests and egress for the current period. Advanced mode adds per-day charts and a request log (tool name, latency, status, error code — not message content).

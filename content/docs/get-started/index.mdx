@@ -1,54 +1,72 @@
 ---
-title: Get Started
-description: Connect your tools. Query everything. In 5 minutes.
+title: Getting started
+description: Create an account, connect a mailbox, and call your first MCP tool.
 ---
 
-# Get Started with Conflu
+# Getting started
 
-Conflu is an MCP (Model Context Protocol) server that connects your SaaS tools — Microsoft 365, Google Workspace, and more — and makes them queryable by Claude.
+Conflu is multi-account MCP middleware: you add **one** HTTP endpoint to your AI client, connect **many** mailboxes (Microsoft 365 and Google Workspace today), and pick the account per tool call with `account_id`. You do not reconfigure Claude or Cursor for each client.
 
-## Prerequisites
+## What you need
 
-- A Conflu account ([conflu.xyz](https://conflu.xyz))
-- Claude Desktop or any MCP-compatible client
+- A [Conflu account](https://conflu.xyz/signup)
+- An AI client that supports MCP over HTTP (Claude Desktop, Claude Code, Cursor, and others)
+- A Microsoft 365 or Google Workspace mailbox you can sign in to with OAuth
 
-## Quick Setup
+## 1. Create your account
 
-### 1. Sign up
+Sign up at [conflu.xyz](https://conflu.xyz/signup). You start on the Free plan with package connectors (Microsoft 365 and Google Workspace).
 
-Go to [conflu.xyz](https://conflu.xyz) and create your account.
+## 2. Connect your first mailbox
 
-### 2. Connect your tools
+1. Open the dashboard → **Connections** → **Accounts**.
+2. Click **Add Microsoft 365 account** or **Add Google account**.
+3. Complete the provider sign-in. Conflu stores only the refresh token in Google Cloud Secret Manager — not in Firestore.
 
-In the dashboard, click **Connect** next to the tools you want to use (M365, Google Workspace, etc.).
+Reconnecting the same email updates the same account record; Conflu does not create duplicates.
 
-### 3. Get your MCP endpoint
+## 3. Get your MCP API key
 
-In **Settings**, copy your personal MCP endpoint URL:
+1. Go to **Connections** → **MCP setup**.
+2. If you do not have a key yet, connect an account (a key is minted on first successful OAuth) or use **Rotate key**.
+3. Copy the key once — it is shown in full only at mint time (`cfx_…`).
+
+Your MCP endpoint URL is:
+
 ```
-https://conflu-mcp-server-xxxxxxxx-ew.a.run.app
+https://mcp.conflu.xyz/v1
 ```
 
-### 4. Configure Claude Desktop
+Every request uses `Authorization: Bearer cfx_YOUR_KEY`.
 
-Add Conflu to your `claude_desktop_config.json`:
+## 4. Connect an AI client
+
+Follow [Connect your AI client](/docs/connect-ai-client) for Claude Desktop, Claude Code, Cursor, and other hosts.
+
+## 5. Run a first tool call
+
+After the client lists tools, ask it to list mail — or call `microsoft_list_emails` yourself with JSON-RPC:
+
 ```json
 {
-  "mcpServers": {
-    "conflu": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "YOUR_ENDPOINT_URL"]
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "microsoft_list_emails",
+    "arguments": {
+      "account_id": "YOUR_ACCOUNT_ID",
+      "folder": "inbox",
+      "limit": 5
     }
   }
 }
 ```
 
-Restart Claude Desktop. You can now ask Claude to search your emails, read calendar events, and more.
+Post that to `https://mcp.conflu.xyz/v1` with your bearer token. You get message metadata back from Microsoft Graph (not full bodies on all plans).
 
----
+## Next steps
 
-## What's next?
-
-- [Connectors](/docs/connectors) — Which tools are supported
-- [MCP Reference](/docs/mcp-reference) — Full list of MCP tools
-- [Plans](/docs/plans) — Free, Pro, and Ultra tiers
+- [Accounts](/docs/accounts) — primary account, reconnection, token expiry
+- [Tools reference](/docs/tools-reference) — all `microsoft_*` and `google_*` tools
+- [Troubleshooting](/docs/troubleshooting) — common errors
