@@ -51,3 +51,23 @@ Each row shows time, tool, account (email looked up from your account list), lat
 ## Platform outages
 
 If [conflu.xyz/status](https://conflu.xyz/status) shows a connector degraded or down, the issue is on Conflu's side — reconnecting your mailbox will not help. The dashboard overview also warns when platform checks fail.
+
+## A file tool says `INSUFFICIENT_SCOPES`
+
+File access was added after your account was connected, and an OAuth grant cannot
+gain permissions on its own. Reconnect that account from **Connections → Accounts**:
+the consent screen will now ask for read access to your files. Nothing else about the
+account changes — same record, same id, same history.
+
+With `account_id: "all"`, accounts that still lack the scope come back in `errors[]`
+while the others return their files, so one unreconnected mailbox never hides the rest.
+
+## A file came back shorter than it is
+
+Look at `truncated` and `total_bytes` in the response. Conflu reads at most your
+plan's per-file cap — 10 MB on Pro, 50 MB on Ultra — and tells you when it stopped
+early rather than pretending the fragment is the whole file. For a large document,
+open `web_url` at the provider.
+
+Free plans get file listings but no file content: `read_file` returns
+`PLAN_UPGRADE_REQUIRED`.
