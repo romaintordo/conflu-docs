@@ -122,6 +122,41 @@ Mark a task completed.
 | `task_id` | yes | Task id |
 | `account_id` | no | Defaults to primary |
 
+### `microsoft_list_files`
+
+List or search OneDrive items (metadata only).
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary Microsoft | Account UUID or `"all"` |
+| `query` | string | — | Optional search string (OneDrive search) |
+| `limit` | integer | 25 | Max items per account (1–50) |
+
+Each item includes `name`, `path`, `size`, `mime_type`, `modified_at`, `web_url`, and `file_id`.
+
+Accounts connected before file access was added return `INSUFFICIENT_SCOPES` for that account (partial results when using `"all"`).
+
+### `microsoft_read_file`
+
+Return text content for one OneDrive file (or metadata when the type is not extractable).
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `file_id` | yes | Drive item id from `microsoft_list_files` |
+| `account_id` | yes | Specific account UUID (not `"all"`) |
+
+Free plan: `PLAN_UPGRADE_REQUIRED`. Pro: up to 10 MB per file; Ultra: up to 50 MB.
+
+Conflu downloads at most your plan's cap — it never pulls a whole large file to
+discard most of it. When a file is bigger than the cap, the response carries
+`truncated: true`, `bytes_returned` (what you got) and `total_bytes` (the file's real
+size), so an assistant can tell you it is reading a fragment instead of implying it
+read the whole document.
+
+Binary formats (images, video, archives, PDF) and Office documents are not extracted:
+the response returns metadata and says why, with `web_url` to open the file at the
+provider.
+
 ---
 
 ## Google Workspace
@@ -196,6 +231,29 @@ Google Tasks lists and items.
 | `task_id` | yes | Task id |
 | `account_id` | no | Defaults to primary |
 
+### `google_list_files`
+
+List or search Google Drive files (metadata only).
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account_id` | string | primary Google | Account UUID or `"all"` |
+| `query` | string | — | Optional name substring filter |
+| `limit` | integer | 25 | Max files per account (1–50) |
+
+Same item fields as Microsoft. Missing `drive.readonly` scope → `INSUFFICIENT_SCOPES` with reconnect guidance.
+
+### `google_read_file`
+
+Read one Drive file as text when supported.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `file_id` | yes | File id from `google_list_files` |
+| `account_id` | yes | Specific account UUID (not `"all"`) |
+
+Same plan limits and truncation behaviour as `microsoft_read_file`.
+
 ---
 
 ## Errors
@@ -212,6 +270,6 @@ Failed tools return JSON-RPC **200** with an MCP result where `isError: true` an
 }
 ```
 
-Common codes: `UNAUTHORIZED`, `QUOTA_EXCEEDED_REQUESTS`, `QUOTA_EXCEEDED_EGRESS`, `ACCOUNT_DISCONNECTED`, `ACCOUNT_NOT_FOUND`, `PROVIDER_ERROR`, `RATE_LIMITED_BY_PROVIDER`, `INSUFFICIENT_SCOPES`, `INVALID_PARAMETERS`, `TOOL_NOT_FOUND`.
+Common codes: `UNAUTHORIZED`, `QUOTA_EXCEEDED_REQUESTS`, `QUOTA_EXCEEDED_EGRESS`, `PLAN_UPGRADE_REQUIRED`, `ACCOUNT_DISCONNECTED`, `ACCOUNT_NOT_FOUND`, `PROVIDER_ERROR`, `RATE_LIMITED_BY_PROVIDER`, `INSUFFICIENT_SCOPES`, `INVALID_PARAMETERS`, `TOOL_NOT_FOUND`.
 
 See [Troubleshooting](/docs/troubleshooting) for what to do next.
