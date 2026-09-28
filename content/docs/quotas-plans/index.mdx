@@ -41,8 +41,14 @@ Upgrade your plan or wait for the UTC month rollover.
 
 ## Free-tier data shaping
 
-On Free, email bodies and large attachments may be truncated or omitted compared to Pro/Ultra. Tool responses still count toward egress.
+On Free, `*_read_email` returns the first **500 characters** of each body field and says
+so (`truncated: true`, plus the characters returned and the real total). `*_read_file`
+returns no file content at all on Free; Pro reads up to 10 MB per file and Ultra up to
+50 MB. Attachment **content** is never returned on any plan — the email tools give each
+attachment's name, type and size only. Every response counts toward egress.
 
 ## See your usage
 
-Dashboard → **Usage** shows requests and egress for the current period. Advanced mode adds per-day charts and a request log (tool name, latency, status, error code — not message content).
+Dashboard → **Usage** shows requests and egress for the current period, per-day charts,
+and a request log (tool name, account, latency, status, error code — never message
+content). There is no simple/advanced toggle: the detail is always there.
