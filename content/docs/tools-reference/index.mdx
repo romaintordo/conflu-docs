@@ -50,7 +50,9 @@ Disconnected accounts are not queried; they are listed in `errors` with `ACCOUNT
 
 ### `microsoft_list_emails`
 
-List recent messages from a mail folder (metadata; plan limits may truncate bodies on Free).
+List recent messages from a mail folder: sender, recipients, subject, dates, flags,
+whether the message has attachments, and a short preview. **No message body** — use
+[`microsoft_read_email`](#microsoft_read_email) for that.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -64,6 +66,45 @@ List recent messages from a mail folder (metadata; plan limits may truncate bodi
   "arguments": { "account_id": "all", "folder": "inbox", "limit": 10 }
 }
 ```
+
+### `microsoft_read_email`
+
+Read one message in full.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `message_id` | yes | Message id from `microsoft_list_emails` |
+| `account_id` | no | A specific account UUID — **not** `"all"`. Defaults to your primary Microsoft account |
+
+On top of the fields `microsoft_list_emails` returns, the response carries:
+
+| Field | Description |
+| --- | --- |
+| `body_text` | The plain-text body |
+| `body_html` | The HTML body, when the message has one |
+| `cc` | Cc recipients |
+| `bcc` | Bcc recipients — see the note below |
+| `attachments` | One entry per attachment: `attachment_id`, `filename`, `content_type`, `size_bytes` |
+
+```json
+{
+  "name": "microsoft_read_email",
+  "arguments": { "account_id": "6324d63c-…", "message_id": "AAMkAD…" }
+}
+```
+
+**Free truncates bodies at 500 characters.** When that happens the response carries
+`truncated: true` together with `body_text_chars_returned` and `body_text_total_chars`
+(and the `body_html_*` equivalents), so an assistant can say it is summarising a fragment
+rather than the whole message. Pro and Ultra return the body in full.
+
+**About `bcc`.** A message you *received* does not normally carry a Bcc header — Bcc
+exists on the sender's copy. Conflu returns `bcc: []` when the header is absent. That
+means *this mailbox cannot see the Bcc list*, not that nobody was Bcc'd; an assistant
+should not conclude the latter.
+
+**Attachments are metadata only.** Conflu returns each attachment's name, type and size,
+never its content, and never downloads the bytes.
 
 ### `microsoft_list_calendar_events`
 
@@ -163,7 +204,9 @@ provider.
 
 ### `google_list_emails`
 
-List Gmail messages (summary metadata).
+List Gmail messages: sender, recipients, subject, dates, labels, whether the message
+has attachments, and Gmail's short snippet. **No message body** — use
+[`google_read_email`](#google_read_email) for that.
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -181,6 +224,45 @@ List Gmail messages (summary metadata).
   }
 }
 ```
+
+### `google_read_email`
+
+Read one message in full.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `message_id` | yes | Message id from `google_list_emails` |
+| `account_id` | no | A specific account UUID — **not** `"all"`. Defaults to your primary Google account |
+
+On top of the fields `google_list_emails` returns, the response carries:
+
+| Field | Description |
+| --- | --- |
+| `body_text` | The plain-text body |
+| `body_html` | The HTML body, when the message has one |
+| `cc` | Cc recipients |
+| `bcc` | Bcc recipients — see the note below |
+| `attachments` | One entry per attachment: `attachment_id`, `filename`, `content_type`, `size_bytes` |
+
+```json
+{
+  "name": "google_read_email",
+  "arguments": { "account_id": "6324d63c-…", "message_id": "AAMkAD…" }
+}
+```
+
+**Free truncates bodies at 500 characters.** When that happens the response carries
+`truncated: true` together with `body_text_chars_returned` and `body_text_total_chars`
+(and the `body_html_*` equivalents), so an assistant can say it is summarising a fragment
+rather than the whole message. Pro and Ultra return the body in full.
+
+**About `bcc`.** A message you *received* does not normally carry a Bcc header — Bcc
+exists on the sender's copy. Conflu returns `bcc: []` when the header is absent. That
+means *this mailbox cannot see the Bcc list*, not that nobody was Bcc'd; an assistant
+should not conclude the latter.
+
+**Attachments are metadata only.** Conflu returns each attachment's name, type and size,
+never its content, and never downloads the bytes.
 
 ### `google_list_calendar_events`
 
