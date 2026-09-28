@@ -1,9 +1,9 @@
 {
   "projects": {
-    "default": "conflu-xyz"
+    "default": "conflu-prod"
   },
   "targets": {
-    "conflu-xyz": {
+    "conflu-prod": {
       "hosting": {
         "conflu-docs": ["conflu-docs"]
       }
