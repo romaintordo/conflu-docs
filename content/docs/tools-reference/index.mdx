@@ -106,6 +106,38 @@ should not conclude the latter.
 **Attachments are metadata only.** Conflu returns each attachment's name, type and size,
 never its content, and never downloads the bytes.
 
+### `microsoft_read_attachment`
+
+Download one attachment from a message and read it — the original document, not a preview.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `message_id` | yes | Message id from `microsoft_list_emails` |
+| `attachment_id` | yes | From the `attachments[]` of `microsoft_read_email` |
+| `account_id` | no | A specific account UUID — **not** `"all"`. Defaults to your primary Microsoft account |
+| `size_bytes` | no | The size `microsoft_read_email` reported. Pass it and an oversized file is refused **before** it is downloaded |
+
+```json
+{
+  "name": "microsoft_read_attachment",
+  "arguments": {
+    "message_id": "AAMkAD…",
+    "attachment_id": "AAMkAGI2…",
+    "size_bytes": 86097
+  }
+}
+```
+
+Requires **Pro or Ultra** — on Free the file tools return `PLAN_UPGRADE_REQUIRED`.
+What comes back for each file type is described in
+[What a document returns](#what-a-document-returns).
+
+Graph classifies attachments. Only a `fileAttachment` carries bytes: an `itemAttachment`
+(a forwarded message or event) and a `referenceAttachment` (a link to a file elsewhere)
+return metadata and a message explaining what they are, rather than an error.
+See [Graph attachment: get](https://learn.microsoft.com/en-us/graph/api/attachment-get).
+
+
 ### `microsoft_list_calendar_events`
 
 List calendar events (default window: now → +7 days).
@@ -179,7 +211,7 @@ Accounts connected before file access was added return `INSUFFICIENT_SCOPES` for
 
 ### `microsoft_read_file`
 
-Return text content for one OneDrive file (or metadata when the type is not extractable).
+Read one OneDrive file: text, extracted text from a PDF or Office document, or the image itself.
 
 | Parameter | Required | Description |
 | --- | --- | --- |
@@ -194,9 +226,9 @@ discard most of it. When a file is bigger than the cap, the response carries
 size), so an assistant can tell you it is reading a fragment instead of implying it
 read the whole document.
 
-Binary formats (images, video, archives, PDF) and Office documents are not extracted:
-the response returns metadata and says why, with `web_url` to open the file at the
-provider.
+What comes back depends on the file type — see
+[What a document returns](#what-a-document-returns) below. The same pipeline serves
+`*_read_file` and `*_read_attachment`.
 
 ---
 
@@ -264,6 +296,35 @@ should not conclude the latter.
 **Attachments are metadata only.** Conflu returns each attachment's name, type and size,
 never its content, and never downloads the bytes.
 
+### `google_read_attachment`
+
+Download one attachment from a message and read it — the original document, not a preview.
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `message_id` | yes | Message id from `google_list_emails` |
+| `attachment_id` | yes | From the `attachments[]` of `google_read_email` |
+| `account_id` | no | A specific account UUID — **not** `"all"`. Defaults to your primary Google account |
+| `size_bytes` | no | The size `google_read_email` reported. Pass it and an oversized file is refused **before** it is downloaded |
+
+```json
+{
+  "name": "google_read_attachment",
+  "arguments": {
+    "message_id": "1a0aed836bb93167",
+    "attachment_id": "ANGjdJ_6nfcBR_Oxzcw…",
+    "size_bytes": 86097
+  }
+}
+```
+
+Requires **Pro or Ultra** — on Free the file tools return `PLAN_UPGRADE_REQUIRED`.
+What comes back for each file type is described in
+[What a document returns](#what-a-document-returns).
+
+See [Gmail users.messages.attachments.get](https://developers.google.com/gmail/api/reference/rest/v1/users.messages.attachments/get).
+
+
 ### `google_list_calendar_events`
 
 Same date/limit behaviour as Microsoft calendar tool.
@@ -327,7 +388,7 @@ Same item fields as Microsoft. Missing `drive.readonly` scope → `INSUFFICIENT_
 
 ### `google_read_file`
 
-Read one Drive file as text when supported.
+Read one Drive file: text, extracted text from a PDF or Office document, or the image itself.
 
 | Parameter | Required | Description |
 | --- | --- | --- |
@@ -335,6 +396,43 @@ Read one Drive file as text when supported.
 | `account_id` | yes | Specific account UUID (not `"all"`) |
 
 Same plan limits and truncation behaviour as `microsoft_read_file`.
+
+---
+
+## What a document returns
+
+`microsoft_read_file`, `google_read_file`, `microsoft_read_attachment` and
+`google_read_attachment` all go through one extraction pipeline, so a file behaves the
+same whether it arrived by email or lives in a drive.
+
+| File type | What you get |
+| --- | --- |
+| `text/*`, JSON, XML, YAML | The text, as UTF-8 |
+| **PDF with a text layer** | The extracted text |
+| **PDF without one** (a scan) | No text, and a message saying so — see below |
+| **Office** (`.docx`, `.xlsx`, `.pptx`) | The extracted text |
+| **Images** (`image/*`) | An **MCP image content block**, the original bytes — your assistant sees the picture, it is not described to it |
+| Anything else | Metadata and `File type … is not supported for content extraction.` |
+
+### Scans are named, never guessed
+
+A PDF with no text layer returns:
+
+> This PDF has no extractable text layer (likely a scan). Conflu does not render pages
+> to images; open the original in a viewer or OCR it elsewhere.
+
+Conflu says it could not read the file rather than returning an empty string an assistant
+might summarise as "the document is blank". The same applies when a PDF or Office file
+fails to parse.
+
+### Size limits
+
+The plan cap (`fileContentMaxBytes`: Free **0**, Pro **10 MB**, Ultra **50 MB**) applies to
+the **decoded file bytes**. Conflu checks the size before downloading whenever the provider
+already reported it, so an oversized file is refused without spending the bytes.
+
+Egress is billed on the **whole MCP response**, including the base64 payload of an image
+block, which is about a third larger than the original file.
 
 ---
 
